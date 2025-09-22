@@ -1,18 +1,171 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Template simples de exemplo para criação de uma VPC
+Description: Infra básica com VPC, Subnet pública, IGW, Rota; S3 e EC2 opcionais.
+
+Parameters:
+  VpcCIDR:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: Bloco CIDR da VPC
+  SubnetCIDR:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: Bloco CIDR da Subnet pública
+  KeyName:
+    Type: String
+    Default: ""
+    Description: Nome do par de chaves SSH (obrigatório se LaunchEC2 = true)
+  CreateS3Bucket:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "false"
+    Description: Criar bucket S3?
+  LaunchEC2:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "false"
+    Description: Subir uma instância EC2 pública?
+
+Mappings:
+  RegionMap:
+    # Map só para demonstration; AMI via SSM é melhor para evitar ID fixo
+    dummy:
+      value: "unused"
+
+Conditions:
+  CreateS3Cond: !Equals [!Ref CreateS3Bucket, "true"]
+  LaunchEC2Cond: !Equals [!Ref LaunchEC2, "true"]
 
 Resources:
-  MyVPC:
+  VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: !Ref VpcCIDR
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: FiamaVPC
+          Value: Fiama-VPC
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Fiama-IGW
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref SubnetCIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Fiama-Public-Subnet
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Fiama-RT
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+
+  S3Bucket:
+    Condition: CreateS3Cond
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: fiama-cfn-bucket
+    DeletionPolicy: Delete
+
+  InstanceSG:
+    Condition: LaunchEC2Cond
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Acesso HTTP e SSH
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Fiama-EC2-SG
+
+  # AMI gerenciada via SSM - Amazon Linux 2023
+  AmiParameter:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+  EC2Instance:
+    Condition: LaunchEC2Cond
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiParameter
+      InstanceType: t3.micro
+      KeyName: !Ref KeyName
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds: [!Ref InstanceSG]
+      Tags:
+        - Key: Name
+          Value: Fiama-EC2
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          dnf update -y
+          dnf install -y httpd
+          systemctl enable httpd
+          systemctl start httpd
+          echo "Hello DIO/Fiama" > /var/www/html/index.html
 
 Outputs:
   VpcId:
     Description: ID da VPC criada
-    Value: !Ref MyVPC
+    Value: !Ref VPC
+
+  SubnetId:
+    Description: ID da Subnet criada
+    Value: !Ref PublicSubnet
+
+  S3BucketName:
+    Condition: CreateS3Cond
+    Description: Nome do bucket S3 (se criado)
+    Value: !Ref S3Bucket
+
+  EC2PublicIP:
+    Condition: LaunchEC2Cond
+    Description: IP público da instância EC2 (se criada)
+    Value: !GetAtt EC2Instance.PublicIp
