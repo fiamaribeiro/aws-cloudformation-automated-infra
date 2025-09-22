@@ -69,16 +69,13 @@ graph TD
 ## 🖼️ Prints das Etapas
 
 - Stack criada com sucesso  
-  ![Stack criada](/images/stack_created.png)
+  ![Stack criada](/images/stack_created_v2.png)
 
 - Recursos criados (VPC, Subnet, S3, EC2)  
-  ![Recursos](/images/resources.png)
-
-- Teste de acesso (se aplicável)  
-  ![Teste EC2](/images/ec2_test.png)
+  ![Recursos](/images/resources_v2.png)
 
 - Exclusão da stack  
-  ![Delete Complete](/images/delete.png)
+  ![Delete Complete](/images/delete_complete_v2.png)
 
 ---
 
