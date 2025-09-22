@@ -75,6 +75,10 @@ graph TD
 - Recursos criados (VPC, Subnet, S3, EC2)  
   ![Recursos](/images/resources_v2.png)
 
+ - Diagrama Mermaid renderizado no GitHub
+   ![Diagrama Mermaid](/images/diagram_mermaid.png)
+
+
 - Exclusão da stack  
   ![Delete Complete](/images/delete_complete_v2.png)
 
