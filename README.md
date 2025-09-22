@@ -17,8 +17,8 @@ Este repositório faz parte do desafio **“Entendendo o Desafio”** da [DIO](h
 ```
 / (raiz do repo)
  ├── README.md
- ├── /templates      → arquivos .yaml ou .json usados no CloudFormation
- ├── /images         → capturas de tela organizadas
+ ├── /templates      
+ ├── /images       
 ```
 
 ---
