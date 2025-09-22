@@ -17,7 +17,8 @@ Este repositório faz parte do desafio **“Entendendo o Desafio”** da [DIO](h
 ```
 / (raiz do repo)
  ├── README.md
- ├── /templates      
+ ├── /templates
+ │ └── main.yaml → template simples de VPC (exemplo)  
  ├── /images       
 ```
 
