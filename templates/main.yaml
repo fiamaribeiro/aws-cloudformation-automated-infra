@@ -1,1 +1,18 @@
-# Template principal para CloudFormation (placeholder)
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template simples de exemplo para criação de uma VPC
+
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: FiamaVPC
+
+Outputs:
+  VpcId:
+    Description: ID da VPC criada
+    Value: !Ref MyVPC
