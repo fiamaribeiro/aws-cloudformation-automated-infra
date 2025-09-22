@@ -42,7 +42,6 @@ graph TD
   RT --> Subnet[Public Subnet 10.0.1.0/24]
   Subnet --> EC2[(EC2 Apache)]
   S3[(S3 Private Bucket)]
-
 ```
 
 ---
@@ -97,7 +96,10 @@ graph TD
 ## 💻 Subindo via CLI (Opcional)
 
 ```bash
-aws cloudformation deploy   --template-file templates/main.yaml   --stack-name cloudformation-lab   --capabilities CAPABILITY_IAM
+aws cloudformation deploy \
+  --template-file templates/main.yaml \
+  --stack-name cloudformation-lab \
+  --capabilities CAPABILITY_IAM
 ```
 
 ---
