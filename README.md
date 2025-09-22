@@ -95,12 +95,25 @@ graph TD
 
 ## 💻 Subindo via CLI (Opcional)
 
-```bash
+# Stack básica (sem EC2 e sem S3)
 aws cloudformation deploy \
   --template-file templates/main.yaml \
   --stack-name cloudformation-lab \
   --capabilities CAPABILITY_IAM
-```
+
+# Stack com S3
+aws cloudformation deploy \
+  --template-file templates/main.yaml \
+  --stack-name cloudformation-lab \
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides CreateS3Bucket=true
+
+# Stack com EC2 (requer informar KeyName)
+aws cloudformation deploy \
+  --template-file templates/main.yaml \
+  --stack-name cloudformation-lab \
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides LaunchEC2=true KeyName=seu-par-de-chaves
 
 ---
 
